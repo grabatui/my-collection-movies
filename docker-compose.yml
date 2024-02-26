@@ -1,0 +1,58 @@
+version: '3'
+
+services:
+  nginx:
+    build:
+      context: ./docker/nginx/development
+    container_name: my-collection-movies-nginx
+    volumes:
+      - .:/app
+    depends_on:
+      - php
+    ports:
+      - "8083:80"
+    networks:
+      php:
+
+  php:
+    build:
+      context: ./docker/php/development
+    container_name: my-collection-movies-php
+    environment:
+      KINOPOISK_TOKEN: ${KINOPOISK_TOKEN}
+    volumes:
+      - .:/app
+      - composer:/root/.composer/cache
+    depends_on:
+      - database
+    ports:
+      - "9001:9000"
+    networks:
+      php:
+      database:
+
+  database:
+    build:
+      context: ./docker/postgres/development
+    container_name: my-collection-movies-database
+    environment:
+      POSTGRES_DB: "app"
+      POSTGRES_PASSWORD: "123123"
+      POSTGRES_USER: "postgres"
+      POSTGRES_HOST_AUTH_METHOD: trust
+      PGDATA: /docker/_var/database
+    volumes:
+      - ./docker/_var/postgres/development:/docker-entrypoint-initdb.d
+      - ./docker/_var/database:/var/lib/postgresql/data:rw
+    ports:
+      - "15433:5432"
+    networks:
+      database:
+
+volumes:
+  composer:
+  database:
+
+networks:
+  database:
+  php:
